@@ -6,15 +6,26 @@ import json
 import joblib
 
 import os
+import sys
 sys.path.append(os.path.abspath('../src'))
 
-import model_utility as util
+from . import model_utility as util
+
 
 # Load model
-model = joblib.load('../models/logit_model.pkl')
+import os
 
-# Load woe_temp from JSON
-with open('../models/woe_bins.json', 'r') as f:
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # two levels up from predict.py
+model_path = os.path.join(BASE_DIR, 'models', 'logit_model.pkl')
+
+model = joblib.load(model_path)
+
+
+# Get absolute path to the 'models' folder relative to this script
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # two levels up from predict.py
+woe_path = os.path.join(base_dir, 'models', 'woe_bins.json')
+
+with open(woe_path, 'r') as f:
     woe_temp = pd.read_json(f, orient='records', lines=True)
 
 # Final model features used for prediction (excluding target)
@@ -105,7 +116,7 @@ def predict_pipeline(input_df):
     pd_prob = model.predict(X_model)
 
     # Predict binary label
-    pd_label = (pd_prob >= 0.5).astype(int)
+    pd_label = (pd_prob >= 0.05).astype(int)
 
     # Append to original data
     df_temp['PD'] = pd_prob
